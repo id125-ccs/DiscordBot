@@ -46,4 +46,5 @@ tasks.jar {
 
 tasks.shadowJar {
     minimize()
+    archiveFileName.set("app.jar")
 }
