@@ -1,6 +1,9 @@
 package org.id125.ccs.discord
 
 import com.mongodb.kotlin.client.coroutine.MongoClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import me.centauri07.dc.internal.DiscordCommandManager
 import me.centauri07.promptlin.core.Promptlin
 import me.centauri07.promptlin.jda.JDAPlatform
@@ -25,6 +28,8 @@ fun main() {
 }
 
 object AppContext {
+    val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     val secrets = YamlConfiguration(
         "./conf", "secrets", SecretsConfiguration(), SecretsConfiguration.serializer()
     ).load()
