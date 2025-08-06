@@ -1,13 +1,11 @@
 package org.id125.ccs.discord.verification
 
 import kotlinx.coroutines.runBlocking
-import me.centauri07.dc.api.response.Response
 import me.centauri07.promptlin.core.form.FormSessionRegistry
 import me.centauri07.promptlin.jda.ButtonClickedListener
 import me.centauri07.promptlin.jda.JDAContext
 import me.centauri07.promptlin.jda.MessageReceivedListener
 import me.centauri07.promptlin.jda.SelectionMenuListener
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.SubscribeEvent
@@ -34,19 +32,21 @@ object VerificationListener {
             return
         }
 
-        event.user.openPrivateChannel().queue {
-            VerificationService.startVerification(executor, it)
+        val channel = event.user.openPrivateChannel().complete()
 
-            event.reply("Verification process has began. Please check your DMs. ${it.asMention})\n\n" +
-                    "__**| IMPORTANT |**__ Should you wish to cancel this verification process, type `ccs!fcancel`").setEphemeral(true).queue()
-        }
+        VerificationService.startVerification(executor, channel)
+
+        event.reply(
+            "Verification process has began. Please check your DMs. ${channel.asMention})\n\n" +
+                    "__**| IMPORTANT |**__ Should you wish to cancel this verification process, type `ccs!fcancel`"
+        ).setEphemeral(true).queue()
     }
 
     @SubscribeEvent
     fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.message.contentRaw != "ccs!fcancel") return
 
-        if (!FormSessionRegistry.contains<JDAContext>{ it.context.user.id == event.author.id }) {
+        if (!FormSessionRegistry.contains<JDAContext> { it.context.user.id == event.author.id }) {
             return event.message.reply("You have no active session.").mentionRepliedUser(false).queue()
         }
 
