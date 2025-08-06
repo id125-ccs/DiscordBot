@@ -1,10 +1,13 @@
 package org.id125.ccs.discord.verification
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import me.centauri07.promptlin.core.form.FormSessionScope
 import me.centauri07.promptlin.core.form.form
 import me.centauri07.promptlin.core.prompt.input.handlers.StringInputHandler
 import me.centauri07.promptlin.discord.prompt.choice.ButtonOption
 import me.centauri07.promptlin.discord.prompt.choice.SelectOption
+import org.id125.ccs.discord.AppContext
 import org.id125.ccs.discord.profile.Campus
 import org.id125.ccs.discord.profile.College
 import org.id125.ccs.discord.profile.DegreeProgram
@@ -98,7 +101,9 @@ val verificationForm = form {
         }
 
         onComplete { email ->
-            VerificationService.startVerification(email)
+            AppContext.coroutineScope.launch(Dispatchers.IO) {
+                VerificationService.sendVerificationCode(email)
+            }
         }
     }
 
@@ -109,6 +114,6 @@ val verificationForm = form {
         "Please enter the __**6‑digit**__ verification code sent to your official DLSU email address."
     ) {
         includeIf { consentGranted() && isDlsu() }
-        validate("Incorrect code.") { it == VerificationService.getVerificationCode(get(email)) }
+        validate("Incorrect code.") { VerificationService.verify(get(email), it) }
     }
 }
