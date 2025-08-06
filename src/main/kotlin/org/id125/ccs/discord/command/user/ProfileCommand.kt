@@ -33,24 +33,26 @@ val profileCommand by lazy {
 
                     return Response.of(
                         EmbedBuilder().apply {
-                            setTitle("${executor.user.effectiveName}'s Profile")
+                            setTitle("${target.effectiveName}'s Profile")
                             setColor(Color(0x1ABC9C)) // Teal color
 
                             addField("🎓 Batch", profile.batchId, true)
-                            addField("🏫 College", profile.college.name, true)
+                            addField("🏫 College", profile.college.displayName, true)
                             addBlankField(true)
-                            addField("📖 Degree Program", profile.degreeProgram?.code ?: "N/A", true)
+                            profile.degreeProgram?.let {
+                                addField("📖 Degree Program", profile.degreeProgram.displayName, true)
+                            }
                             addField("📍 Campus", profile.campus.name, true)
                             addBlankField(true)
                             addField("💻 GitHub", profile.github.ifBlank { "N/A" }, true)
 
-                            setThumbnail(executor.effectiveAvatarUrl)
+                            setThumbnail(target.effectiveAvatarUrl)
 
                             setImage("https://i.ibb.co/B9pQgyS/id125-ccs-logo-banner.png")
 
                             setFooter(
                                 "id125.ccs • 2025",
-                                executor.jda.selfUser.effectiveAvatarUrl
+                                target.jda.selfUser.effectiveAvatarUrl
                             )
                         }.build()
                     )
