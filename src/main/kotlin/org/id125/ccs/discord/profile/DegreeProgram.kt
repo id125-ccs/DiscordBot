@@ -19,6 +19,7 @@ enum class DegreeProgram(
     // Information Systems / Technology (Manila)
     IS("is", "IS", "Information Systems", "\uD83C\uDF10", Campus.MANILA),
     IT("it", "IT", "Information Technology", "\uD83C\uDF10", Campus.MANILA),
+    INFSC("infsc", "INFSC", "Information Security", "\uD83C\uDF10", Campus.MANILA),
 
     // Computer Science (Laguna)
     CSS("css", "CSS", "Computer Science", "💻", Campus.LAGUNA),
