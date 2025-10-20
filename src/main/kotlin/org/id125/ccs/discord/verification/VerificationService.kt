@@ -16,7 +16,6 @@ import org.id125.ccs.discord.profile.Campus
 import org.id125.ccs.discord.profile.College
 import org.id125.ccs.discord.profile.DegreeProgram
 import org.id125.ccs.discord.profile.UserProfile
-import org.id125.ccs.discord.utility.Hashing
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 
@@ -75,7 +74,7 @@ object VerificationService {
 
             val userProfile = UserProfile(
                 executor.idLong,
-                Hashing.hash(email), batchId, college, department, campus, ""
+                email, batchId, college, department, campus, ""
             )
 
             AppContext.coroutineScope.launch(Dispatchers.IO) {
@@ -133,7 +132,7 @@ object VerificationService {
         }
     }
 
-    fun isEmailRegistered(email: String): Boolean = runBlocking { userProfileRepository.findByEmail(Hashing.hash(email)) } != null
+    fun isEmailRegistered(email: String): Boolean = runBlocking { userProfileRepository.findByEmail(email) } != null
 
     /**
      * Generates a code, stores it, and sends the email.
