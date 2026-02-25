@@ -1,0 +1,8 @@
+.gradle/
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+.env

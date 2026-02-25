@@ -9,7 +9,11 @@ import me.centauri07.promptlin.jda.SelectionMenuListener
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.SubscribeEvent
+import net.dv8tion.jda.api.interactions.components.text.TextInput
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import net.dv8tion.jda.api.interactions.modals.Modal
 import org.id125.ccs.discord.AppContext
+import org.id125.ccs.discord.utility.callback.Callback
 
 object VerificationListener {
 
@@ -23,6 +27,56 @@ object VerificationListener {
         }
 
         if (user != null) {
+            val member = event.member ?: return
+
+            val serverConfiguration = AppContext.mainConfiguration.serversConfiguration.firstOrNull {
+                it.serverId == member.guild.idLong
+            } ?: return
+
+            if (!member.roles.any { it.idLong == serverConfiguration.verifiedRoleId }) {
+                val id = "callback:verification:name:g_${member.guild.idLong}:u_${member.idLong}"
+
+                val suffix = " | [${user.degreeProgram}] [${user.batchId}]"
+                val maxBaseLength = 32 - suffix.length
+
+                val modal = Modal.create(id, "Enter name")
+                    .addActionRow(
+                        TextInput.create(
+                            "name",
+                            "Your Name",
+                            TextInputStyle.SHORT
+                        )
+                            .setRequired(true)
+                            .setMaxLength(maxBaseLength)
+                            .build()
+                    )
+                    .build()
+
+                Callback.MODAL.register(id) {
+                    val baseName = getValue("name")?.asString
+                        ?.trim()
+                        ?.take(maxBaseLength)
+                        ?: return@register
+
+                    val finalName = baseName + suffix
+
+                    if (member.guild.selfMember.canInteract(member)) {
+                        member.guild.modifyNickname(member, finalName).queue()
+
+                        listOfNotNull(
+                            serverConfiguration.verifiedRoleId,
+                            serverConfiguration.collegeRoles[user.college]
+                        )
+                            .mapNotNull { event.jda.getRoleById(it) }
+                            .forEach { member.guild.addRoleToMember(member, it).queue() }
+                    }
+                }
+
+                event.replyModal(modal).queue()
+
+                return
+            }
+
             event.reply("You are already verified.").setEphemeral(true).queue()
             return
         }
@@ -34,12 +88,12 @@ object VerificationListener {
 
         val channel = event.user.openPrivateChannel().complete()
 
-        VerificationService.startVerification(executor, channel)
-
         event.reply(
             "Verification process has began. Please check your DMs. ${channel.asMention})\n\n" +
                     "__**| IMPORTANT |**__ Should you wish to cancel this verification process, type `ccs!fcancel`"
         ).setEphemeral(true).queue()
+
+        VerificationService.startVerification(executor, channel)
     }
 
     @SubscribeEvent

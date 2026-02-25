@@ -1,21 +1,15 @@
 package org.id125.ccs.discord.verification
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.centauri07.promptlin.discord.prompt.choice.ButtonOption
 import me.centauri07.promptlin.discord.prompt.choice.SelectOption
 import me.centauri07.promptlin.jda.JDAContext
-import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.id125.ccs.discord.AppContext
 import org.id125.ccs.discord.persistence.UserProfileRepository
 import org.id125.ccs.discord.profile.Campus
 import org.id125.ccs.discord.profile.College
-import org.id125.ccs.discord.profile.DegreeProgram
-import org.id125.ccs.discord.profile.UserProfile
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 
@@ -30,107 +24,101 @@ object VerificationService {
         verificationForm.start(JDAContext(channel, executor.user)) {
             val consent = get<ButtonOption>("consent").value
 
-            if (consent == "disagree") {
-                it.sendMessage(
-                    MessageCreateBuilder()
-                        .setContent(
-                            "You have chosen to **disagree** with the consent. We cannot proceed with verification unless you agree. " +
-                                    "If this was a mistake, please restart the process."
-                        )
-                        .build()
-                )
-
-                return@start
-            }
-
             val name = get<String>("name")
 
-            val university = get<ButtonOption>("university").value
+            val university = getOrNull<ButtonOption>("university")?.value
+            val batchId = getOrNull<String>("batch_id")
+            val campus = getOrNull<ButtonOption>("campus")?.value
+            val college = getOrNull<SelectOption>("college")?.value
+            val degreeProgram = getOrNull<String>("degree_program")
+            val email = getOrNull<String>("email")
 
-            if (university == "other") {
-                if (!executor.guild.selfMember.canInteract(executor)) return@start
+            val verificationContext = VerificationContext(
+                channel, executor,
 
-                executor.modifyNickname("[Visitor] $name").queue()
-
-                if (executor.guild.idLong == AppContext.mainConfiguration.serverId) {
-                    val role = executor.guild.getRoleById(AppContext.mainConfiguration.visitorRoleId) ?: return@start
-
-                    executor.guild.addRoleToMember(executor, role).queue()
-                }
-                return@start
-            }
-
-            val batchId = get<String>("batch_id")
-
-            val campus = Campus.entries.first { campus -> campus.id == get<ButtonOption>("campus").value }
-
-            val college =
-                College.entries.first { college -> college.abbreviation.lowercase() == get<SelectOption>("college").value }
-
-            val department =
-                getOrNull<SelectOption>("department")?.value?.let { department -> DegreeProgram.entries.firstOrNull { degreeProgram -> degreeProgram.id == department } }
-
-            val email = get<String>("email")
-
-            val userProfile = UserProfile(
-                executor.idLong,
-                email, batchId, college, department, campus, ""
+                name, university, batchId,
+                campus?.let { value -> Campus.valueOf(value.uppercase()) },
+                college?.let { value -> College.valueOf(value.uppercase()) },
+                degreeProgram, email
             )
 
-            AppContext.coroutineScope.launch(Dispatchers.IO) {
-                AppContext.userProfileRepository.insert(userProfile)
-            }
+            val strategy: VerificationStrategy =
+                if (consent != "agree") ConsentDisagreeStrategy
+                else if (university == "other") VisitorStrategy
+                else DefaultStrategy
 
-            channel.sendMessage(
-                MessageCreateBuilder()
-                    .setEmbeds(
-                        EmbedBuilder().apply {
-                            setColor(0x57F287) // Discord green
-                            setTitle("You’re now verified!")
-                            setDescription(
-                                "${executor.asMention}, welcome to **id125.ccs**! 🎉\n\n" +
-                                        "We’re excited to have you join our community. Here’s your quick-start guide to getting settled:\n\n" +
-
-                                        "📢 **Stay Updated**\n" +
-                                        "Check out <#1393396190669836388> for important news and server updates.\n\n" +
-
-                                        "📝 **Know the Rules**\n" +
-                                        "Before posting, please read <#1393390398772215912> so everyone can have a safe and friendly experience.\n\n" +
-
-                                        "👤 **Set Up Your Profile & Roles**\n" +
-                                        "Go to <#1398187454153883729> to choose your roles and unlock access to different parts of the server.\n\n" +
-
-                                        "🙋 **Introduce Yourself**\n" +
-                                        "After setting up your roles, say hi in <#1393601890566013191> and tell us a bit about yourself!\n\n" +
-
-                                        "🚀 **Explore the Onboarding Hub**\n" +
-                                        "Visit <#1393585851593789581> for tips, resources, and to learn more about what we offer.\n\n" +
-
-                                        "💬 **Join the Conversation**\n" +
-                                        "Head to <#1393401288619724942> to meet other members and start chatting.\n\n" +
-
-                                        "Once you’ve gone through these steps, you’re all set to enjoy your stay! 🎯"
-                            )
-
-                            setImage("https://i.ibb.co/B9pQgyS/id125-ccs-logo-banner.png")
-
-                            setFooter("id125.ccs • Welcome aboard!")
-                        }.build()
-                    )
-                    .build()
-            ).queue()
-
-            if (!executor.guild.selfMember.canInteract(executor)) return@start
-
-            if (executor.guild.idLong == AppContext.mainConfiguration.serverId) {
-                val role = executor.guild.getRoleById(AppContext.mainConfiguration.verifiedRoleId) ?: return@start
-
-                executor.guild.addRoleToMember(executor, role).queue()
-            }
-
-            executor.modifyNickname("$name | [${(department?.code ?: college.abbreviation)}] [$batchId]").queue()
+            strategy.verify(verificationContext)
         }
     }
+
+//    fun startVerification(executor: Member, channel: MessageChannel) {
+//        verificationForm.start(JDAContext(channel, executor.user)) {
+//            val consent = get<ButtonOption>("consent").value
+//
+//            if (consent == "disagree") {
+//                it.sendMessage(
+//                    MessageCreateBuilder()
+//                        .setContent(
+//                            "You have chosen to **disagree** with the consent. We cannot proceed with verification unless you agree. " +
+//                                    "If this was a mistake, please restart the process."
+//                        )
+//                        .build()
+//                )
+//
+//                return@start
+//            }
+//
+//            val name = get<String>("name")
+//
+//            val university = get<ButtonOption>("university").value
+//
+//            if (university == "other") {
+//                if (!executor.guild.selfMember.canInteract(executor)) return@start
+//
+//                executor.modifyNickname("[Visitor] $name").queue()
+//
+//                if (executor.guild.idLong == AppContext.mainConfiguration.serverId) {
+//                    val role = executor.guild.getRoleById(AppContext.mainConfiguration.visitorRoleId) ?: return@start
+//
+//                    executor.guild.addRoleToMember(executor, role).queue()
+//                }
+//
+//                return@start
+//            }
+//
+//            val batchId = get<String>("batch_id")
+//
+//            val campus = Campus.entries.first { campus -> campus.id == get<ButtonOption>("campus").value }
+//
+//            val college =
+//                College.entries.first { college -> college.abbreviation.lowercase() == get<SelectOption>("college").value }
+//
+//            val department =
+//                getOrNull<SelectOption>("department")?.value?.let { department -> DegreeProgram.entries.firstOrNull { degreeProgram -> degreeProgram.id == department } }
+//
+//            val email = get<String>("email")
+//
+//            val userProfile = UserProfile(
+//                executor.idLong,
+//                email, batchId, college, department, campus
+//            )
+//
+//            AppContext.coroutineScope.launch(Dispatchers.IO) {
+//                userProfileRepository.insert(userProfile)
+//            }
+//
+//
+//            if (!executor.guild.selfMember.canInteract(executor)) return@start
+//
+//            if (executor.guild.idLong == AppContext.mainConfiguration.serverId) {
+//                val role = executor.guild.getRoleById(AppContext.mainConfiguration.verifiedRoleId) ?: return@start
+//
+//                executor.guild.addRoleToMember(executor, role).queue()
+//            }
+//
+//            executor.modifyNickname("$name | [${(department?.code ?: college.abbreviation)}] [$batchId]").queue()
+//        }
+//    }
 
     fun isEmailRegistered(email: String): Boolean = runBlocking { userProfileRepository.findByEmail(email) } != null
 

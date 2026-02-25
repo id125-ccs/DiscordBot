@@ -10,7 +10,6 @@ import me.centauri07.promptlin.discord.prompt.choice.SelectOption
 import org.id125.ccs.discord.AppContext
 import org.id125.ccs.discord.profile.Campus
 import org.id125.ccs.discord.profile.College
-import org.id125.ccs.discord.profile.DegreeProgram
 
 val verificationForm = form {
     val consent = choice<ButtonOption>(
@@ -30,11 +29,6 @@ val verificationForm = form {
     }
 
     val consentGranted: FormSessionScope.() -> Boolean = { get(consent).value == "agree" }
-
-    input(StringInputHandler, "name", "Name", "Enter your preferred display name. **Maximum: 16 characters.**") {
-        includeIf { consentGranted() }
-        validate("Display name must not exceed 16 characters.") { it.length <= 16 }
-    }
 
     val university = choice<ButtonOption>("university", "University", "Which university are you from?") {
         includeIf { consentGranted() }
@@ -62,7 +56,7 @@ val verificationForm = form {
         includeIf { consentGranted() && isDlsu() }
 
         Campus.entries.forEach {
-            option(ButtonOption(it.id, it.displayName, "", it.emoji, style = 3))
+            option(ButtonOption(it.name, it.displayName, "", it.emoji, style = 3))
         }
     }
 
@@ -74,13 +68,18 @@ val verificationForm = form {
         }
     }
 
-    val department = choice<SelectOption>("department", "Department", "Which CCS program are you enrolled in?") {
-        includeIf { consentGranted() && isDlsu() && get(college).value == "ccs" }
+    val degreeProgram = input(StringInputHandler,"degree_program", "Degree Program Code", "What is your degree program code?") {
+        includeIf { consentGranted() && isDlsu() }
+        validate("Maximum length exceeded for degree program code.") { it.length <= 7 }
+    }
 
-        DegreeProgram.entries.forEach {
-            option(SelectOption(it.id, it.code, it.displayName, it.emoji)) {
-                includeIf { get(campus).value == it.campus.id }
-            }
+    input(StringInputHandler, "name", "Name", "Enter your preferred display name.") {
+        includeIf { consentGranted() && isDlsu() }
+        validate("Display name exceeded the maximum for preferred display name.") {
+            val suffix = " | [${get(degreeProgram)}] [${get(batchId)}]"
+            val maxBaseLength = 32 - suffix.length
+
+            it.length <= maxBaseLength
         }
     }
 

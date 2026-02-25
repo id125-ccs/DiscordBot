@@ -9,7 +9,10 @@ import me.centauri07.promptlin.core.Promptlin
 import me.centauri07.promptlin.jda.JDAPlatform
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.hooks.AnnotatedEventManager
+import net.dv8tion.jda.api.hooks.SubscribeEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.id125.ccs.discord.command.moderation.purgeCommand
 import org.id125.ccs.discord.command.user.profileCommand
@@ -21,6 +24,7 @@ import org.id125.ccs.discord.configuration.YamlConfiguration
 import org.id125.ccs.discord.email.EmailService
 import org.id125.ccs.discord.persistence.UserProfileRepository
 import org.id125.ccs.discord.profile.UserProfile
+import org.id125.ccs.discord.utility.callback.Callback
 import org.id125.ccs.discord.verification.VerificationListener
 
 fun main() {
@@ -30,23 +34,31 @@ fun main() {
 object AppContext {
     val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val secrets = YamlConfiguration(
-        "./conf", "secrets", SecretsConfiguration(), SecretsConfiguration.serializer()
-    ).load()
+    val secrets = SecretsConfiguration(
+        System.getenv("DISCORD_TOKEN"),
+
+        System.getenv("EMAIL_ADDRESS"),
+        System.getenv("EMAIL_PASSWORD"),
+
+        System.getenv("DB_CONNECTION"),
+        System.getenv("DB_NAME"),
+        System.getenv("DB_COLLECTION")
+    )
 
     val mainConfiguration = YamlConfiguration(
-        "./conf", "config", MainConfiguration(), MainConfiguration.serializer()
-    ).load()
+        "/app/config", "config", MainConfiguration(listOf()),
+        MainConfiguration.serializer()
+    ).also { it.load() }.value
 
     val emailService = EmailService(
         "smtp.gmail.com", 587, secrets.emailAddress, secrets.emailPassword
     )
 
     private val client = MongoClient.create(secrets.mongodbConnectionString)
-    private val database = client.getDatabase("id125ccs")
+    private val database = client.getDatabase(secrets.databaseName)
 
     val userProfileRepository by lazy {
-        UserProfileRepository(database.getCollection<UserProfile>("profiles"))
+        UserProfileRepository(database.getCollection<UserProfile>(secrets.databaseCollection))
     }
 
     val jda: JDA by lazy {
@@ -64,6 +76,7 @@ object AppContext {
 
         jda.setEventManager(AnnotatedEventManager())
         jda.addEventListener(VerificationListener)
+        jda.addEventListener(this)
 
         Promptlin.configure {
             platform(JDAPlatform(jda))
@@ -75,5 +88,11 @@ object AppContext {
         verifyCommand
         purgeCommand
         profileCommand
+    }
+
+    // Callbacks
+    @SubscribeEvent
+    fun onEvent(e: Event) {
+        if (e is ModalInteractionEvent) Callback.MODAL.handle(e)
     }
 }
