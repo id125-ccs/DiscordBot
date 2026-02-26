@@ -1,0 +1,17 @@
+services:
+  discord-bot:
+    build:
+      context: .
+      target: discord-bot
+    volumes:
+      - discord-bot-config:/app/config
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_NAME=${DB_NAME}
+      - DB_COLLECTION=${DB_COLLECTION}
+  
+volumes:
+  discord-bot-config: 
