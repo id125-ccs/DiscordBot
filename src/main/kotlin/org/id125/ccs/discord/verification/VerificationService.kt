@@ -1,8 +1,15 @@
 package org.id125.ccs.discord.verification
 
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
 import me.centauri07.promptlin.discord.prompt.choice.ButtonOption
 import me.centauri07.promptlin.discord.prompt.choice.SelectOption
+import me.centauri07.promptlin.core.form.FormSessionRegistry
 import me.centauri07.promptlin.jda.JDAContext
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -12,6 +19,8 @@ import org.id125.ccs.discord.profile.Campus
 import org.id125.ccs.discord.profile.College
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 data class VerificationKey(val email: String)
 
@@ -20,6 +29,7 @@ object VerificationService {
     private val random = SecureRandom()
     private val userProfileRepository: UserProfileRepository = AppContext.userProfileRepository
 
+    @OptIn(ExperimentalTime::class)
     fun startVerification(executor: Member, channel: MessageChannel) {
         verificationForm.start(JDAContext(channel, executor.user)) {
             val consent = get<ButtonOption>("consent").value
@@ -49,6 +59,9 @@ object VerificationService {
 
             strategy.verify(verificationContext)
         }
+
+        val sessions = FormSessionRegistry.filter<JDAContext> { it.context.user.idLong == executor.user.idLong }
+        sessions.first().timeStarted = Clock.System.now()
     }
 
 //    fun startVerification(executor: Member, channel: MessageChannel) {
@@ -147,6 +160,29 @@ object VerificationService {
         }
 
         return isValid
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun formSessionExpiration(){
+        AppContext.coroutineScope.launch(Dispatchers.IO) {
+            while (true) {
+
+                // 5 seconds is hard-coded, preferably gets from a config
+                delay(5.seconds)
+
+                val time = Clock.System.now()
+
+                for (form in FormSessionRegistry.getSessions()){
+
+                    val elapsed: Duration = time - form.timeStarted
+
+                    // 5 minutes is also hard-coded, preferably gets from a config
+                    if (elapsed > 5.minutes)
+                        FormSessionRegistry.unregister(form)
+
+                }
+            }
+        }
     }
 
     /**

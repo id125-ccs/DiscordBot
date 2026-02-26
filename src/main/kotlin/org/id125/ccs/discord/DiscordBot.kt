@@ -26,6 +26,7 @@ import org.id125.ccs.discord.persistence.UserProfileRepository
 import org.id125.ccs.discord.profile.UserProfile
 import org.id125.ccs.discord.utility.callback.Callback
 import org.id125.ccs.discord.verification.VerificationListener
+import org.id125.ccs.discord.verification.VerificationService
 
 fun main() {
     AppContext.start()
@@ -88,6 +89,7 @@ object AppContext {
         verifyCommand
         purgeCommand
         profileCommand
+        VerificationService.formSessionExpiration()
     }
 
     // Callbacks
