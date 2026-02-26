@@ -1,0 +1,91 @@
+serversConfiguration:
+  - serverId: 1451441031391346728
+    dependency: -1
+    verifiedRoleId: 1451484410615693374
+    visitorRoleId: 1451484477174845540
+
+    collegeRoles:
+      CCS: 1451484536838815764
+      CED: 1451484541654139003
+      CLA: 1451484644917907476
+      COB: 1451484671052353711
+      COE: 1451484697304760499
+      COS: 1451484725750534224
+      SOE: 1451484759946694756
+
+    panelMessage:
+      title: "Welcome to id125.ccs!"
+      description: "To access the rest of the server, you need to verify your identity."
+      color: 2280254   # 0x22C55E
+      image: "https://i.ibb.co/B9pQgyS/id125-ccs-logo-banner.png"
+
+      fields:
+        - name: "How to Verify"
+          value: |
+            1. Click the **Verify** button below
+            2. Follow the instructions that appear
+            3. Once verified, you will gain access to all channels
+          inline: false
+
+        - name: "Everyone is Welcome"
+          value: "Whether you're from **DLSU**, another DLSU college, or not from DLSU at all — you are free to join!"
+          inline: false
+
+        - name: "Need Help?"
+          value: "If you encounter any issues, please **contact a moderator** for assistance."
+          inline: false
+
+      footer:
+        text: "id125.ccs • Safe & Welcoming Community"
+
+    welcomeMessage:
+      title: "Welcome!"
+      description: "Welcome to the server, enjoy your stay 🎉"
+      color: 3066993
+      timestamp: "2025-01-01T00:00:00Z"
+
+      footer:
+        text: "CCS Community"
+
+      fields:
+        - name: "Rules"
+          value: "Please read the rules in #rules"
+          inline: false
+
+  - serverId: 1451478194007052298
+    dependency: -1
+    verifiedRoleId: 1451484936858243174
+    visitorRoleId: 1451484957745614950
+
+    panelMessage:
+      title: "Welcome to id125.ccs!"
+      description: "To access the rest of the server, you need to verify your identity."
+      color: 2280254   # 0x22C55E
+
+      fields:
+        - name: "How to Verify"
+          value: |
+            1. Click the **Verify** button below
+            2. Follow the instructions that appear
+            3. Once verified, you will gain access to all channels
+          inline: false
+
+        - name: "Everyone is Welcome"
+          value: "Whether you're from **DLSU**, another DLSU college, or not from DLSU at all — you are free to join!"
+          inline: false
+
+        - name: "Need Help?"
+          value: "If you encounter any issues, please **contact a moderator** for assistance."
+          inline: false
+
+      footer:
+        text: "id125.ccs • Safe & Welcoming Community"
+
+    welcomeMessage:
+      title: "Welcome!"
+      description: "Welcome to the server, enjoy your stay 🎉"
+      color: 3066993
+      timestamp: "2025-01-01T00:00:00Z"
+
+      footer:
+        text: "CCS Community"

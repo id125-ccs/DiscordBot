@@ -10,6 +10,6 @@ data class SecretsConfiguration(
     val emailPassword: String = "EMAIL_PASSWORD",
 
     val mongodbConnectionString: String = "MONGODB_CONNECTION_STRING",
-
-    val hashKey: String = "HASH_KEY"
+    val databaseName: String = "DATABASE_NAME",
+    val databaseCollection: String = "COLLECTION_NAME",
 )

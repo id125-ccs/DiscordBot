@@ -1,13 +1,12 @@
 package org.id125.ccs.discord.utility
 
-import org.id125.ccs.discord.AppContext
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 object Hashing {
-    private val SECRET_KEY: ByteArray = Base64.getDecoder().decode(AppContext.secrets.hashKey)
+    private val SECRET_KEY: ByteArray = Base64.getDecoder().decode("test")
 
     private val macThreadLocal = ThreadLocal.withInitial {
         val mac = Mac.getInstance("HmacSHA256")

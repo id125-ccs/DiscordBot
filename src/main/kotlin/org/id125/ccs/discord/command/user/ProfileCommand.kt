@@ -39,16 +39,13 @@ val profileCommand by lazy {
                             addField("🎓 Batch", profile.batchId, true)
                             addField("🏫 College", profile.college.displayName, true)
                             addBlankField(true)
-                            profile.degreeProgram?.let {
-                                addField("📖 Degree Program", profile.degreeProgram.displayName, true)
-                            }
+                            addField("📖 Degree Program", profile.degreeProgram, true)
                             addField("📍 Campus", profile.campus.name, true)
                             addBlankField(true)
-                            addField("💻 GitHub", profile.github.ifBlank { "N/A" }, true)
 
                             setThumbnail(target.effectiveAvatarUrl)
 
-                            setImage("https://i.ibb.co/B9pQgyS/id125-ccs-logo-banner.png")
+//                            setImage("https://i.ibb.co/B9pQgyS/id125-ccs-logo-banner.png")
 
                             setFooter(
                                 "id125.ccs • 2025",

@@ -8,7 +8,6 @@ data class UserProfile(
     val email: String,
     val batchId: String,
     val college: College,
-    val degreeProgram: DegreeProgram?,
-    val campus: Campus,
-    val github: String
+    val degreeProgram: String,
+    val campus: Campus
 )
