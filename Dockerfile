@@ -12,7 +12,6 @@ COPY build.gradle.kts settings.gradle.kts ./
 
 RUN ./gradlew dependencies --no-daemon
 
-COPY config config
 COPY src src
 
 RUN ./gradlew shadowJar --no-daemon
@@ -21,6 +20,7 @@ FROM eclipse-temurin:21-jre-alpine AS discord-bot
 
 # Copy build to /app
 WORKDIR /app
+COPY ./config ./config
 COPY --from=builder /build/build/libs/app.jar app.jar
 
 # Run .jar file
