@@ -48,7 +48,7 @@ val verificationForm = form {
     ) {
         includeIf { consentGranted() && isDlsu() }
         validate("Invalid batch ID number.") {
-            it.length == 3 && it.toIntOrNull()?.let { parsed -> parsed in 99..125 } == true
+            it.length == 3 && it.toIntOrNull()?.let { parsed -> parsed in 99..126 } == true
         }
     }
 
